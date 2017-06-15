@@ -1,7 +1,11 @@
-初始化工作
+#初始化工作
+
 MapperRegistry.addMapper  把所有Mapper接口(如：UserMapper.java )类注册到
+
  private final Map<Class<?>, MapperProxyFactory<?>> knownMappers = new HashMap<Class<?>, MapperProxyFactory<?>>() 中
+ 
  可以看到 value 放的是Mapper代理的工厂类 如下
+ 
  public class MapperProxyFactory<T> {
   private final Class<T> mapperInterface;
   private Map<Method, MapperMethod> methodCache = new ConcurrentHashMap<Method, MapperMethod>();
