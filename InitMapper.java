@@ -1,4 +1,9 @@
 #初始化工作
+-stack
+org.apache.ibatis.binding.MapperRegistry.addMapper(Class<T> type)
+    org.apache.ibatis.builder.annotation.MapperAnnotationBuilder.parse()
+    org.apache.ibatis.builder.annotation.MapperAnnotationBuilder.loadXmlResource()
+    org.apache.ibatis.builder.annotation.MapperAnnotationBuilder.parsePendingMethods()
 
  1、把所有Mapper接口(如：UserMapper.java )类注册到
 
@@ -73,28 +78,8 @@
     }
     parsePendingMethods();
   }
-
-
-// 类似UserMapper  -> 则去找 nameSpace + Class.getType().getName()(package) + UserMapper.xml
- private void loadXmlResource() {
-    // Spring may not know the real resource name so we check a flag
-    // to prevent loading again a resource twice
-    // this flag is set at XMLMapperBuilder#bindMapperForNamespace
-    if (!configuration.isResourceLoaded("namespace:" + type.getName())) {
-      String xmlResource = type.getName().replace('.', '/') + ".xml";
-      InputStream inputStream = null;
-      try {
-        inputStream = Resources.getResourceAsStream(type.getClassLoader(), xmlResource);
-      } catch (IOException e) {
-        // ignore, resource is not required
-      }
-      if (inputStream != null) {
-        XMLMapperBuilder xmlParser = new XMLMapperBuilder(inputStream, assistant.getConfiguration(), xmlResource, configuration.getSqlFragments(), type.getName());
-        xmlParser.parse();
-      }
-    }
-  }
-    //@@1  把对应方法的方法名、 解析后的sql 、等等信息放入assistant 
+  
+    //@@1  把对应方法的方法名、 解析后的sql 、等等信息放入configuration
   assistant.addMappedStatement(
           mappedStatementId,
           sqlSource,
@@ -121,6 +106,28 @@
           // ResultSets
           null);
     }
+
+
+// 类似UserMapper  -> 则去找 nameSpace + Class.getType().getName()(package) + UserMapper.xml
+ private void loadXmlResource() {
+    // Spring may not know the real resource name so we check a flag
+    // to prevent loading again a resource twice
+    // this flag is set at XMLMapperBuilder#bindMapperForNamespace
+    if (!configuration.isResourceLoaded("namespace:" + type.getName())) {
+      String xmlResource = type.getName().replace('.', '/') + ".xml";
+      InputStream inputStream = null;
+      try {
+        inputStream = Resources.getResourceAsStream(type.getClassLoader(), xmlResource);
+      } catch (IOException e) {
+        // ignore, resource is not required
+      }
+      if (inputStream != null) {
+        XMLMapperBuilder xmlParser = new XMLMapperBuilder(inputStream, assistant.getConfiguration(), xmlResource, configuration.getSqlFragments(), type.getName());
+        xmlParser.parse();
+      }
+    }
+  }
+
  
  -解析xml的stack
  org.apache.ibatis.builder.xml.MapperAnnotationBuilder.loadXmlResource() 
@@ -161,6 +168,17 @@
       throw new BuilderException("Error parsing Mapper XML. Cause: " + e, e);
     }
   }
+
+  5和6类似  我们以5为例
+  -stack
+  org.apache.ibatis.builder.xml.resultMapElements(List<XNode> list)
+    org.apache.ibatis.builder.xml.resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings)
+      org.apache.ibatis.builder.ResultMapResolver.resolve()
+	  org.apache.ibatis.builder.MapperBuilderAssistant.addResultMap
+	    org.apache.ibatis.session.Configuration.addResultMap(ResultMap rm)
+	  
+	  根据栈可以观察到最终也是将解析xml的信息放入Configuration中
+	  
 
   //解析语句(select|insert|update|delete)
 //<select
