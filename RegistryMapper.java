@@ -144,6 +144,7 @@ org.apache.ibatis.binding.MapperRegistry.addMapper(Class<T> type)
 //	    select * from Blog where id = #{id}
 //	  </select>
 //	</mapper>
+  这个context就是整个<mapper></mapper>节点（包括子节点）
   private void configurationElement(XNode context) {
     try {
       //1.配置namespace
@@ -177,7 +178,134 @@ org.apache.ibatis.binding.MapperRegistry.addMapper(Class<T> type)
 	  org.apache.ibatis.builder.MapperBuilderAssistant.addResultMap
 	    org.apache.ibatis.session.Configuration.addResultMap(ResultMap rm)
 	  
-	  根据栈可以观察到最终也是将解析xml的信息放入Configuration中
+	  根据栈可以观察到最终也是将解析xml的信息放入Configuration中, 具体各个类如下：
+	  //5.配置resultMap,高级功能
+  private void resultMapElements(List<XNode> list) throws Exception {
+      //基本上就是循环把resultMap加入到Configuration里去,保持2份，一份缩略，一分全名
+    for (XNode resultMapNode : list) {
+      try {
+          //循环调resultMapElement
+        resultMapElement(resultMapNode);
+      } catch (IncompleteElementException e) {
+        // ignore, it will be retried
+      }
+    }
+  }
+  
+//5.1 配置resultMap
+  private ResultMap resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings) throws Exception {
+    //错误上下文
+//取得标示符   ("resultMap[userResultMap]")
+//    <resultMap id="userResultMap" type="User">
+//      <id property="id" column="user_id" />
+//      <result property="username" column="username"/>
+//      <result property="password" column="password"/>
+//    </resultMap>
+    ErrorContext.instance().activity("processing " + resultMapNode.getValueBasedIdentifier());
+    String id = resultMapNode.getStringAttribute("id",
+        resultMapNode.getValueBasedIdentifier());
+    //一般拿type就可以了，后面3个难道是兼容老的代码？
+    String type = resultMapNode.getStringAttribute("type",
+        resultMapNode.getStringAttribute("ofType",
+            resultMapNode.getStringAttribute("resultType",
+                resultMapNode.getStringAttribute("javaType"))));
+    //高级功能，还支持继承?
+//  <resultMap id="carResult" type="Car" extends="vehicleResult">
+//    <result property="doorCount" column="door_count" />
+//  </resultMap>
+    String extend = resultMapNode.getStringAttribute("extends");
+    //autoMapping
+    Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
+    Class<?> typeClass = resolveClass(type);
+    Discriminator discriminator = null;
+    List<ResultMapping> resultMappings = new ArrayList<ResultMapping>();
+    resultMappings.addAll(additionalResultMappings);
+    List<XNode> resultChildren = resultMapNode.getChildren();
+    for (XNode resultChild : resultChildren) {
+      if ("constructor".equals(resultChild.getName())) {
+        //解析result map的constructor
+        processConstructorElement(resultChild, typeClass, resultMappings);
+      } else if ("discriminator".equals(resultChild.getName())) {
+        //解析result map的discriminator
+        discriminator = processDiscriminatorElement(resultChild, typeClass, resultMappings);
+      } else {
+        List<ResultFlag> flags = new ArrayList<ResultFlag>();
+        if ("id".equals(resultChild.getName())) {
+          flags.add(ResultFlag.ID);
+        }
+        //调5.1.1 buildResultMappingFromContext,得到ResultMapping
+        resultMappings.add(buildResultMappingFromContext(resultChild, typeClass, flags));
+      }
+    }
+    //最后再调ResultMapResolver得到ResultMap
+    ResultMapResolver resultMapResolver = new ResultMapResolver(builderAssistant, id, typeClass, extend, discriminator, resultMappings, autoMapping);
+    try {
+      return resultMapResolver.resolve();
+    } catch (IncompleteElementException  e) {
+      configuration.addIncompleteResultMap(resultMapResolver);
+      throw e;
+    }
+  }
+
+很明显了解析得到ResultMap节点及子节点并得信息 (id, typeClass, extend, discriminator, resultMappings, autoMapping)后
+调用resultMapResolver.resolve()把信息放入Configuration 类中去
+ public ResultMap resolve() {
+      //解析又去调用MapperBuilderAssistant.addResultMap
+    return assistant.addResultMap(this.id, this.type, this.extend, this.discriminator, this.resultMappings, this.autoMapping);
+  }
+  
+//增加ResultMap
+  public ResultMap addResultMap(
+      String id,
+      Class<?> type,
+      String extend,
+      Discriminator discriminator,
+      List<ResultMapping> resultMappings,
+      Boolean autoMapping) {
+    id = applyCurrentNamespace(id, false);
+    extend = applyCurrentNamespace(extend, true);
+
+    //建造者模式
+    ResultMap.Builder resultMapBuilder = new ResultMap.Builder(configuration, id, type, resultMappings, autoMapping);
+    if (extend != null) {
+      if (!configuration.hasResultMap(extend)) {
+        throw new IncompleteElementException("Could not find a parent resultmap with id '" + extend + "'");
+      }
+      ResultMap resultMap = configuration.getResultMap(extend);
+      List<ResultMapping> extendedResultMappings = new ArrayList<ResultMapping>(resultMap.getResultMappings());
+      extendedResultMappings.removeAll(resultMappings);
+      // Remove parent constructor if this resultMap declares a constructor.
+      boolean declaresConstructor = false;
+      for (ResultMapping resultMapping : resultMappings) {
+        if (resultMapping.getFlags().contains(ResultFlag.CONSTRUCTOR)) {
+          declaresConstructor = true;
+          break;
+        }
+      }
+      if (declaresConstructor) {
+        Iterator<ResultMapping> extendedResultMappingsIter = extendedResultMappings.iterator();
+        while (extendedResultMappingsIter.hasNext()) {
+          if (extendedResultMappingsIter.next().getFlags().contains(ResultFlag.CONSTRUCTOR)) {
+            extendedResultMappingsIter.remove();
+          }
+        }
+      }
+      resultMappings.addAll(extendedResultMappings);
+    }
+    resultMapBuilder.discriminator(discriminator);
+    ResultMap resultMap = resultMapBuilder.build();
+    configuration.addResultMap(resultMap);
+    return resultMap;
+  }
+
+   public void addResultMap(ResultMap rm) {
+    resultMaps.put(rm.getId(), rm);
+    checkLocallyForDiscriminatedNestedResultMaps(rm);
+    checkGloballyForDiscriminatedNestedResultMaps(rm);
+  }
+
+
+  
 	  
 
   //解析语句(select|insert|update|delete)
