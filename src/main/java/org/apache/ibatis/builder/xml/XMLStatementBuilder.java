@@ -145,7 +145,7 @@ public class XMLStatementBuilder extends BaseBuilder {
           ? new Jdbc3KeyGenerator() : new NoKeyGenerator();
     }
 
-	//又去调助手类
+	
     builderAssistant.addMappedStatement(id, sqlSource, statementType, sqlCommandType,
         fetchSize, timeout, parameterMap, parameterTypeClass, resultMap, resultTypeClass,
         resultSetTypeEnum, flushCache, useCache, resultOrdered, 
