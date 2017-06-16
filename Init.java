@@ -1,7 +1,35 @@
 Configuration 是一个顶级配置类    
 
-详情见 org.apache.ibatis.session.Configuration  
+详情见 org.apache.ibatis.session.Configuration 
+重要的成员变量如下：
+//环境  dataSource Factory等
+  protected Environment environment;
+ //映射注册机
+  protected MapperRegistry mapperRegistry = new MapperRegistry(this);
+ //类型处理器注册机  jdbc type -> java type 的转换
+  protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
+  //类型别名注册机
+  protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+  protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
+ //映射的语句,存在Map里  key <select|update|insert|delete>的 id  value 对应的sql语句具体见MappedStatement
+  protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection");
+  //缓存,存在Map里
+  protected final Map<String, Cache> caches = new StrictMap<Cache>("Caches collection");
+  //结果映射,存在Map里    key:namespace+resultMap的id  value <resultMap id="" type=""/>节点
+  protected final Map<String, ResultMap> resultMaps = new StrictMap<ResultMap>("Result Maps collection");
+  protected final Map<String, ParameterMap> parameterMaps = new StrictMap<ParameterMap>("Parameter Maps collection");
+  protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<KeyGenerator>("Key Generators collection");
 
+  protected final Set<String> loadedResources = new HashSet<String>();
+  protected final Map<String, XNode> sqlFragments = new StrictMap<XNode>("XML fragments parsed from previous mappers");
+
+  //不完整的SQL语句
+  protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<XMLStatementBuilder>();
+  protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
+  protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<ResultMapResolver>();
+  protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
+
+构造函数
 public Configuration() {
   
     typeAliasRegistry.registerAlias("JDBC", JdbcTransactionFactory.class);
