@@ -131,13 +131,14 @@ org.apache.ibatis.binding.MapperRegistry.addMapper(Class<T> type)
  
  -解析xml的stack
  org.apache.ibatis.builder.xml.MapperAnnotationBuilder.loadXmlResource() 
-  org.apache.ibatis.builder.xml.XMLMapperBuilder.parse();
-   org.apache.ibatis.builder.xml.XMLMapperBuilder.configurationElement(parser.evalNode("/mapper"));//得到Mapper.xml 中的<mapper> </mapper> 节点
+    org.apache.ibatis.builder.xml.XMLMapperBuilder.parse();
+    org.apache.ibatis.builder.xml.XMLMapperBuilder.configurationElement(parser.evalNode("/mapper"));//得到Mapper.xml 中的<mapper> </mapper> 节点
     org.apache.ibatis.builder.xml.XMLMapperBuilder.resultMapElements(List<XNode> list) //配置resultMap
-     org.apache.ibatis.builder.xml.XMLMapperBuilder.sqlElement(List<XNode> list) //配置sql(定义可重用的 SQL 代码段)
-      org.apache.ibatis.builder.xml.XMLMapperBuilder.buildStatementFromContext(List<XNode> list) //配置select|insert|update|delete
+    org.apache.ibatis.builder.xml.XMLMapperBuilder.sqlElement(List<XNode> list) //配置sql(定义可重用的 SQL 代码段)
+    org.apache.ibatis.builder.xml.XMLMapperBuilder.buildStatementFromContext(List<XNode> list) //配置select|insert|update|delete
        org.apache.ibatis.builder.xml.XMLStatementBuilder.parseStatementNode() //解析语句(select|insert|update|delete)
-
+          org.apache.ibatis.builderMapperBuilder.MapperBuilderAssistant.addMappedStatement//
+	      org.apache.ibatis.session.Configuration.addMappedStatement(MappedStatement ms)//
 //配置mapper元素
 //	<mapper namespace="org.mybatis.example.BlogMapper">
 //	  <select id="selectBlog" parameterType="int" resultType="Blog">
