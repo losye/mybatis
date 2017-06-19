@@ -403,5 +403,12 @@ org.apache.ibatis.binding.MapperRegistry.addMapper(Class<T> type)
         resultSetTypeEnum, flushCache, useCache, resultOrdered, 
         keyGenerator, keyProperty, keyColumn, databaseId, langDriver, resultSets);
   }
-  
+   
+
+  这样就可以理解为什么在使用Spring时 要扫描Mapper所在的包 如下
+ <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+    <property name="basePackage" value="com.chargedot.cdotcloud.sp.dao" /\>
+ </bean>
+ 它所做的就是将其所在的包下的所有Mapper，注册到ReigsryMapper中。
+ 
 
