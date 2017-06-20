@@ -59,6 +59,51 @@
 }
 
 可以发现，生成代理类后，调用Mapper接口，会生成相应的MapperMethod，并缓存起来(methodCache)
+   if (mapperMethod == null) {
+      //找不到才去new
+      mapperMethod = new MapperMethod(mapperInterface, method, sqlSession.getConfiguration());
+      methodCache.put(method, mapperMethod);
+    }
+
+所以这个MapperMethod
+public class MapperMethod {
+  //sql的名称和类型
+  private final SqlCommand command;
+  private final MethodSignature method;
+
+  public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
+    this.command = new SqlCommand(config, mapperInterface, method);
+    this.method = new MethodSignature(config, method);
+  }
+
+public final class MappedStatement {
+
+  private String resource;
+  private Configuration configuration;
+  private String id;
+  private Integer fetchSize;
+  private Integer timeout;
+  private StatementType statementType;
+  private ResultSetType resultSetType;
+  //SQL源码
+  private SqlSource sqlSource;
+  private Cache cache;
+  private ParameterMap parameterMap;
+  private List<ResultMap> resultMaps;
+  private boolean flushCacheRequired;
+  private boolean useCache;
+  private boolean resultOrdered;
+  private SqlCommandType sqlCommandType;
+  private KeyGenerator keyGenerator;
+  private String[] keyProperties;
+  private String[] keyColumns;
+  private boolean hasNestedResultMaps;
+  private String databaseId;
+  private Log statementLog;
+  private LanguageDriver lang;
+  private String[] resultSets;
+
+ 
 
 
   
