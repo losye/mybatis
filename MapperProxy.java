@@ -115,6 +115,29 @@ public class MapperMethod {
     return result;
   }
 
+ public SqlCommand(Configuration configuration, Class<?> mapperInterface, Method method) {
+      String statementName = mapperInterface.getName() + "." + method.getName();
+      MappedStatement ms = null;
+      if (configuration.hasStatement(statementName)) {
+        ms = configuration.getMappedStatement(statementName);
+      } else if (!mapperInterface.equals(method.getDeclaringClass().getName())) { // issue #35
+        //如果不是这个mapper接口的方法，再去查父类
+        String parentStatementName = method.getDeclaringClass().getName() + "." + method.getName();
+        if (configuration.hasStatement(parentStatementName)) {
+          ms = configuration.getMappedStatement(parentStatementName);
+        }
+      }
+      if (ms == null) {
+        throw new BindingException("Invalid bound statement (not found): " + statementName);
+      }
+      name = ms.getId();
+      type = ms.getSqlCommandType();
+      if (type == SqlCommandType.UNKNOWN) {
+        throw new BindingException("Unknown execution method for: " + name);
+      }
+    }
+
+
 public final class MappedStatement {
 
   private String resource;
