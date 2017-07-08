@@ -1,4 +1,17 @@
-Configuration 是一个顶级配置类    
+Configuration 是一个顶级配置类  
+
+configuration
+|--- properties
+|--- settings
+|--- typeAliases
+|--- typeHandlers
+|--- objectFactory
+|--- plugins
+|--- environments
+|--- |--- environment
+|--- |--- |--- transactionManager
+|--- |--- |__ dataSource
+|__ mappers
 
 详情见 org.apache.ibatis.session.Configuration 
 重要的成员变量如下：
