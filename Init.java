@@ -10,12 +10,12 @@ configuration
 |--- environments
 |--- |--- environment
 |--- |--- |--- transactionManager
-|--- |--- |__ dataSource
-|__ mappers
+|--- |--- |--- dataSource
+|--- mappers
 
 详情见 org.apache.ibatis.session.Configuration 
 重要的成员变量如下：
-//环境  dataSource Factory等
+ //环境  dataSource Factory等
   protected Environment environment;
  //映射注册机
   protected MapperRegistry mapperRegistry = new MapperRegistry(this);
@@ -24,7 +24,7 @@ configuration
   //类型别名注册机
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
- //映射的语句,存在Map里  key <select|update|insert|delete>的 id  value 对应的sql语句具体见MappedStatement
+ //映射的语句,存在Map里  key :<select|update|insert|delete>的 id ,  value: 对应的sql语句具体见MappedStatement  
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection");
   //缓存,存在Map里
   protected final Map<String, Cache> caches = new StrictMap<Cache>("Caches collection");
@@ -109,8 +109,10 @@ public void registerAlias(Class<?> type) {
 
   private final Map<String, Class<?>> TYPE_ALIASES = new HashMap<String, Class<?>>();
 
+ //别名注册器
   public TypeAliasRegistry() {
-		//构造函数里注册系统内置的类型别名
+  //构造函数里注册系统内置的类型别名
+  // 在mapper中可以用string 来代替java.lang.String
     registerAlias("string", String.class);
 
 	//基本包装类型
@@ -178,11 +180,11 @@ public void registerAlias(Class<?> type) {
     registerAlias("ResultSet", ResultSet.class);
   }
   
-  另外初始化 TypeHandlerRegistry.TypeHandlerRegistry类
-  此类将jdbcType转为java类，如下所示：
+  //另外初始化 TypeHandlerRegistry.TypeHandlerRegistry类
+  //此类将jdbcType转为java类，如下所示：
    public TypeHandlerRegistry() {
     //构造函数里注册系统内置的类型处理器
-	  //以下是为多个类型注册到同一个handler
+    //以下是为多个类型注册到同一个handler
     register(Boolean.class, new BooleanTypeHandler());
     register(boolean.class, new BooleanTypeHandler());
     register(JdbcType.BOOLEAN, new BooleanTypeHandler());
@@ -211,7 +213,7 @@ public void registerAlias(Class<?> type) {
     register(double.class, new DoubleTypeHandler());
     register(JdbcType.DOUBLE, new DoubleTypeHandler());
 
-	  //以下是为同一个类型的多种变种注册到多个不同的handler
+    //以下是为同一个类型的多种变种注册到多个不同的handler
     register(String.class, new StringTypeHandler());
     register(String.class, JdbcType.CHAR, new StringTypeHandler());
     register(String.class, JdbcType.CLOB, new ClobTypeHandler());
