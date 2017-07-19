@@ -1,3 +1,18 @@
+ 
+configuration.addInterceptor(new PageHelper())
+    
+public void addInterceptor(Interceptor interceptor) {
+    interceptorChain.addInterceptor(interceptor);
+}
+
+ //内部就是一个拦截器的List
+ private final List<Interceptor> interceptors = new ArrayList<Interceptor>();
+ public void addInterceptor(Interceptor interceptor) {
+    interceptors.add(interceptor);
+  }
+
+
+
 插件机制
 通常我们在 MybaitsConfig.xml 中配置引入插件,本文就以com.github.pagehelper.PageHelper为例
 <plugins>
@@ -235,6 +250,12 @@ public class Plugin implements InvocationHandler {
 
 
 以下是PageHelper插件源码，  通常我们使用插件PageHelper.startPage方法
+
+private static final ThreadLocal<Page> LOCAL_PAGE = new ThreadLocal<Page>();
+ public static void startPage(int pageNum, int pageSize, boolean count) {
+        LOCAL_PAGE.set(new Page(pageNum, pageSize, count));
+    }
+    
 我们看看分页插件是如何做的
 @SuppressWarnings({"rawtypes", "unchecked"})
 @Intercepts(
