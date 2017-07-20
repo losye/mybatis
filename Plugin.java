@@ -74,12 +74,12 @@ public void addInterceptor(Interceptor interceptor) {
       }
     }
   }
-  
+  //解析后把Interceptor放入Configuration中
   public void addInterceptor(Interceptor interceptor) {
     interceptorChain.addInterceptor(interceptor);
   }
   
-  解析后把Interceptor放入Configuration中
+  
   
 
 
@@ -238,7 +238,8 @@ public class Plugin implements InvocationHandler {
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }
-
+  
+  //pluginAll 就是循环 Interceptor 调用 对应的plugin
   public Object pluginAll(Object target) {
     //循环调用每个Interceptor.plugin方法
     for (Interceptor interceptor : interceptors) {
@@ -247,17 +248,68 @@ public class Plugin implements InvocationHandler {
     return target;
   }
 
+  //PageHelper的plugin方法如下
+   @Override
+    public Object plugin(Object target) {
+        if (target instanceof Executor) {
+            return Plugin.wrap(target, this);
+        } else {
+            return target;
+        }
+    }
+// 就是动态代理生成子类
+public static Object wrap(Object target, Interceptor interceptor) {
+    //取得签名Map
+    Map<Class<?>, Set<Method>> signatureMap = getSignatureMap(interceptor);
+    //取得要改变行为的类(ParameterHandler|ResultSetHandler|StatementHandler|Executor)
+    Class<?> type = target.getClass();
+    //取得接口
+    Class<?>[] interfaces = getAllInterfaces(type, signatureMap);
+    //产生代理
+    if (interfaces.length > 0) {
+      return Proxy.newProxyInstance(
+          type.getClassLoader(),
+          interfaces,
+          new Plugin(target, interceptor, signatureMap));
+    }
+    return target;
+  }
+    
 
 
-以下是PageHelper插件源码，  通常我们使用插件PageHelper.startPage方法
+
+
+
+//以下是PageHelper插件源码，  通常我们使用插件PageHelper.startPage方法
 
 private static final ThreadLocal<Page> LOCAL_PAGE = new ThreadLocal<Page>();
+//把对应的分页信息放入ThrealLocal中
  public static void startPage(int pageNum, int pageSize, boolean count) {
         LOCAL_PAGE.set(new Page(pageNum, pageSize, count));
+ }
+ 
+//取出时remove，所以PageHelper.startPage(pageNum, pageSize)只对下一次的sql操作有效
+    private Page getPage(RowBounds rowBounds) {
+        Page page = LOCAL_PAGE.get();
+        //移除本地变量
+        LOCAL_PAGE.remove();
+
+        if (page == null) {
+            if (offsetAsPageNum) {
+                page = new Page(rowBounds.getOffset(), rowBounds.getLimit(), rowBoundsWithCount);
+            } else {
+                page = new Page(rowBounds, rowBoundsWithCount);
+            }
+        }
+        return page;
     }
+
+
+
     
 我们看看分页插件是如何做的
 @SuppressWarnings({"rawtypes", "unchecked"})
+ //表示拦截Executor接口
 @Intercepts(
     {
         @Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class}),
