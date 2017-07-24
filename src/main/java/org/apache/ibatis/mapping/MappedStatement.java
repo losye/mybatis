@@ -47,7 +47,9 @@ public final class MappedStatement {
   //SQL源码
   private SqlSource sqlSource;
   private Cache cache;
+	//入参
   private ParameterMap parameterMap;
+//出参
   private List<ResultMap> resultMaps;
   private boolean flushCacheRequired;
   private boolean useCache;
